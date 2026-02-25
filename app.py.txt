@@ -1,0 +1,34 @@
+import streamlit as st
+import pandas as pd
+import joblib
+
+model = joblib.load("SandcreteIQ_Model.pkl")
+cement_brand_encoder = joblib.load("cement_brand_encoder.pkl")
+curing_encoder = joblib.load("curing_encoder.pkl")
+cement_code_encoder = joblib.load("cement_code_encoder.pkl")
+
+st.title("SANDCRETEIQ")
+st.subheader("Sandcrete Block Strength Predictor")
+
+cement_brand = st.selectbox("Cement Brand", cement_brand_encoder.classes_)
+cement_code = st.selectbox("Cement Code", cement_code_encoder.classes_)
+curing_technique = st.selectbox("Curing Technique", curing_encoder.classes_)
+
+mix_ratio = st.number_input("Mix Ratio (enter 6 for 1:6)", min_value=1.0)
+curing_age = st.number_input("Curing Age (days)", min_value=1)
+water_cement_ratio = st.number_input("Water Cement Ratio", min_value=0.1)
+
+if st.button("Predict Strength"):
+
+    input_data = pd.DataFrame({
+        "MixRatio": [mix_ratio],
+        "CuringAge": [curing_age],
+        "WaterCementRatio": [water_cement_ratio],
+        "CementBrand": [cement_brand_encoder.transform([cement_brand])[0]],
+        "CuringTechnique": [curing_encoder.transform([curing_technique])[0]],
+        "CementCode": [cement_code_encoder.transform([cement_code])[0]],
+    })
+
+    prediction = model.predict(input_data)[0]
+
+    st.success(f"Predicted Compressive Strength: {round(prediction,2)} N/mm²")
